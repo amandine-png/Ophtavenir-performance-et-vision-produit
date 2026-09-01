@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Rapport de performance — Ophtavenir</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --linen:#EDEBE5;
+    --beige:#F4F2EF;
+    --haze:#DBE4EA;
+    --haze-2:#c9d7e2;
+    --pulse:#3568F6;
+    --pulse-dark:#2952d1;
+    --pulse-soft:rgba(53,104,246,.08);
+    --darkblue:#0B355F;
+    --amber:#D98A3D;
+    --amber-soft:rgba(217,138,61,.12);
+    --green:#1F7A4D;
+    --black:#111011;
+    --white:#FFFFFF;
+    --gray:#6b7480;
+    --line:#e6e1d5;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Inter',-apple-system,sans-serif;
+    background:var(--linen);
+    color:var(--black);
+    background-image:
+      radial-gradient(circle at 100% 0%, rgba(53,104,246,.07), transparent 42%),
+      radial-gradient(circle at 0% 30%, rgba(11,53,95,.05), transparent 40%);
+    background-attachment:fixed;
+  }
+  .wrap{max-width:1040px;margin:0 auto;padding:40px 24px 80px;}
+  h1,h2,h3{font-family:'Crimson Pro',Georgia,serif;font-weight:600;}
+
+  header{
+    position:relative;
+    background:linear-gradient(135deg,var(--pulse) 0%,var(--pulse-dark) 100%);
+    color:#fff;
+    border-radius:22px;
+    padding:44px 44px 40px;
+    margin-bottom:30px;
+    overflow:hidden;
+    box-shadow:0 12px 30px -12px rgba(37,73,180,.45);
+  }
+  header .wire{position:absolute;top:0;right:0;width:62%;height:100%;opacity:.32;pointer-events:none;}
+  header h1{margin:6px 0 9px;font-size:34px;color:#fff;position:relative;z-index:1;letter-spacing:-.01em;}
+  header p{margin:0;color:rgba(255,255,255,.85);font-size:15px;font-family:'Inter',sans-serif;position:relative;z-index:1;}
+  .badge{
+    display:inline-block;background:rgba(255,255,255,.16);
+    border:1px solid rgba(255,255,255,.28);
+    padding:7px 16px;border-radius:999px;font-size:12.5px;margin-top:18px;
+    position:relative;z-index:1;font-family:'Inter',sans-serif;font-weight:600;letter-spacing:.01em;
+  }
+
+  /* TABS */
+  .tabs{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap;}
+  .tab-btn{
+    flex:1;min-width:180px;padding:16px 20px;border-radius:16px;border:1px solid var(--line);
+    background:var(--white);cursor:pointer;text-align:left;font-family:'Inter',sans-serif;
+    transition:all .15s ease;box-shadow:0 2px 8px -4px rgba(11,53,95,.08);
+  }
+  .tab-btn:hover{border-color:var(--pulse);box-shadow:0 4px 14px -6px rgba(53,104,246,.35);}
+  .tab-btn .tb-name{font-family:'Crimson Pro',serif;font-weight:700;font-size:18px;color:var(--darkblue);display:block;}
+  .tab-btn .tb-sub{font-size:11.5px;color:var(--gray);margin-top:4px;display:block;}
+  .tab-btn.active{background:linear-gradient(135deg,var(--pulse) 0%,var(--pulse-dark) 100%);border-color:var(--pulse-dark);}
+  .tab-btn.active .tb-name,.tab-btn.active .tb-sub{color:#fff;}
+
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  section{
+    position:relative;
+    background:var(--white);border:1px solid var(--line);border-radius:20px;
+    padding:32px 34px 30px;margin-bottom:24px;
+    box-shadow:0 4px 18px -8px rgba(11,53,95,.10);
+  }
+  section::before{
+    content:"";position:absolute;top:0;left:26px;right:26px;height:3px;border-radius:0 0 4px 4px;
+    background:linear-gradient(90deg,var(--pulse),var(--pulse-soft));
+  }
+  section.highlight::before{background:linear-gradient(90deg,var(--amber),var(--amber-soft));}
+  .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:10px;}
+  section h2{
+    font-size:20px;margin:0;color:var(--darkblue);
+    display:flex;align-items:center;gap:11px;
+  }
+  .icn{
+    width:32px;height:32px;border-radius:10px;background:var(--pulse-soft);
+    display:flex;align-items:center;justify-content:center;flex:0 0 32px;
+  }
+  .icn svg{stroke:var(--pulse);}
+  .icn.amber{background:var(--amber-soft);}
+  .icn.amber svg{stroke:var(--amber);}
+  .pill{
+    font-size:11px;font-weight:600;color:var(--pulse-dark);background:var(--pulse-soft);
+    padding:4px 11px;border-radius:999px;font-family:'Inter',sans-serif;white-space:nowrap;
+  }
+  .pill.amber{color:#8a5a20;background:var(--amber-soft);}
+  section .sub{color:var(--gray);font-size:12.5px;margin:6px 0 20px;font-family:'Inter',sans-serif;line-height:1.6;}
+
+  .tbl-wrap{border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(11,53,95,.04);}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;font-family:'Inter',sans-serif;font-variant-numeric:tabular-nums;}
+  thead th{
+    color:#fff;background:var(--darkblue);font-weight:600;font-size:10.5px;
+    text-transform:uppercase;letter-spacing:.07em;padding:13px 16px;text-align:right;
+  }
+  thead th:first-child{text-align:left;}
+  th.total,thead th.total{background:var(--pulse-dark);}
+  td{padding:12.5px 16px;text-align:right;border-bottom:1px solid var(--line);color:var(--black);}
+  td:first-child{text-align:left;color:var(--darkblue);font-weight:600;}
+  td .pct{color:var(--gray);font-weight:500;font-size:12px;}
+  tbody tr:nth-child(even){background:var(--beige);}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover td{background:var(--pulse-soft);}
+  td.total{font-weight:700;color:var(--darkblue);background:var(--haze)!important;}
+  tbody tr:hover td.total{background:var(--haze-2)!important;}
+
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:4px;}
+  .kpi-card{
+    position:relative;border:1px solid var(--line);border-radius:16px;padding:20px 18px;text-align:center;
+    background:linear-gradient(160deg,var(--beige),var(--white));
+  }
+  .kpi-card::before{
+    content:"";position:absolute;top:0;left:18px;right:18px;height:3px;border-radius:0 0 4px 4px;
+    background:var(--pulse);
+  }
+  .kpi-card .label{font-size:11.5px;color:var(--gray);margin-bottom:12px;line-height:1.4;min-height:32px;font-family:'Inter',sans-serif;font-weight:500;}
+  .kpi-card .value{font-family:'Crimson Pro',serif;font-size:30px;font-weight:700;color:var(--darkblue);line-height:1;}
+  .kpi-card .value.small{font-size:24px;}
+  .kpi-card .value.green{color:var(--green);}
+  .kpi-card .foot{font-size:10.5px;color:var(--gray);margin-top:9px;font-family:'Inter',sans-serif;padding-top:9px;border-top:1px dashed var(--line);}
+
+  .repartition-card{
+    border:1px solid var(--line);border-radius:16px;overflow:hidden;
+    box-shadow:0 1px 2px rgba(11,53,95,.04);
+    background:linear-gradient(160deg,var(--beige),var(--white));
+    padding:28px 30px;
+  }
+  .repartition-grid{display:flex;align-items:center;gap:38px;flex-wrap:wrap;}
+  .donut-wrap{flex:0 0 208px;display:flex;justify-content:center;}
+  .donut{
+    width:208px;height:208px;border-radius:50%;position:relative;
+    box-shadow:0 10px 26px -12px rgba(11,53,95,.35), inset 0 0 0 1px rgba(255,255,255,.4);
+  }
+  .donut-hole{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:126px;height:126px;background:var(--white);border-radius:50%;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    box-shadow:inset 0 0 0 1px var(--line), 0 2px 6px rgba(11,53,95,.06);
+  }
+  .donut-total{font-family:'Crimson Pro',serif;font-size:24px;font-weight:700;color:var(--darkblue);line-height:1;}
+  .donut-label{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-top:5px;font-family:'Inter',sans-serif;}
+
+  .legend-list{flex:1;min-width:290px;display:flex;flex-direction:column;}
+  .legend-row{display:flex;align-items:center;gap:11px;padding:8.5px 6px;border-bottom:1px solid var(--line);border-radius:8px;}
+  .legend-row:last-child{border-bottom:none;}
+  .legend-row:hover{background:rgba(255,255,255,.7);}
+  .dot{width:11px;height:11px;border-radius:3px;flex:0 0 11px;box-shadow:0 0 0 3px rgba(255,255,255,.5) inset;}
+  .legend-label{flex:1;font-size:13px;font-weight:600;color:var(--darkblue);}
+  .legend-count{flex:0 0 50px;text-align:right;font-size:13px;font-weight:600;color:var(--black);font-variant-numeric:tabular-nums;}
+  .legend-pct{flex:0 0 60px;text-align:right;font-size:12px;font-weight:700;color:var(--white);font-variant-numeric:tabular-nums;background:var(--darkblue);border-radius:999px;padding:2px 9px;margin-left:4px;}
+  @media (max-width:760px){
+    .repartition-grid{flex-direction:column;}
+    .legend-list{width:100%;}
+  }
+
+  .bars-list{display:flex;flex-direction:column;gap:13px;margin:6px 0 4px;}
+  .bar-item{display:grid;grid-template-columns:230px 1fr 56px;align-items:center;gap:14px;}
+  .bar-item .bl{font-size:12.5px;color:var(--darkblue);font-weight:600;text-align:right;}
+  .bar-track{height:16px;border-radius:999px;background:var(--haze);overflow:hidden;}
+  .bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--pulse),var(--pulse-dark));}
+  .bar-fill.amber{background:linear-gradient(90deg,var(--amber),#b96f26);}
+  .bar-item .bv{font-size:13px;font-weight:700;color:var(--darkblue);text-align:right;font-variant-numeric:tabular-nums;}
+  @media (max-width:760px){
+    .bar-item{grid-template-columns:140px 1fr 46px;}
+    .bar-item .bl{font-size:11.5px;}
+  }
+
+  .mockup{
+    border:1px solid var(--line);border-radius:14px;background:var(--beige);padding:18px 20px;margin-top:6px;
+  }
+  .mockup .mh{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--darkblue);font-size:13px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--line);}
+  .mockup p{font-size:12.5px;color:var(--black);font-family:'Inter',sans-serif;line-height:1.6;margin:0 0 10px;}
+  .mockup ul{margin:0;padding-left:18px;}
+  .mockup li{font-size:12.5px;color:var(--black);font-family:'Inter',sans-serif;line-height:1.7;}
+
+  /* VISION PRODUIT — PHASES */
+  .phase-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:4px;}
+  .phase-card{border:1px solid var(--line);border-radius:16px;padding:22px 20px;background:var(--beige);}
+  .phase-status{display:inline-block;font-size:11px;font-weight:700;color:#fff;padding:5px 14px;border-radius:999px;margin-bottom:14px;font-family:'Inter',sans-serif;letter-spacing:.02em;}
+  .phase-status.livre{background:var(--pulse);}
+  .phase-status.q3{background:var(--darkblue);}
+  .phase-status.q4{background:#5B8AC7;}
+  .phase-card h4{font-family:'Crimson Pro',serif;font-weight:700;font-size:19px;color:var(--darkblue);margin:0 0 10px;}
+  .phase-card p{font-size:12.5px;color:var(--black);font-family:'Inter',sans-serif;line-height:1.6;margin:0 0 12px;}
+  .phase-concrete{font-size:11.5px;color:var(--gray);font-family:'Inter',sans-serif;line-height:1.65;font-style:italic;margin:0 0 14px;}
+  .phase-concrete strong{color:var(--darkblue);font-style:normal;}
+  .phase-tag{display:inline-block;font-size:11.5px;font-weight:600;color:var(--pulse-dark);background:var(--pulse-soft);padding:5px 12px;border-radius:8px;font-family:'Inter',sans-serif;}
+  @media (max-width:760px){
+    .phase-grid{grid-template-columns:1fr;}
+  }
+
+  /* VISION PRODUIT CARDS */
+  .vp-card{border:1px solid var(--line);border-radius:16px;padding:24px 26px;margin-bottom:18px;background:linear-gradient(160deg,var(--beige),var(--white));}
+  .vp-card:last-child{margin-bottom:0;}
+  .vp-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px;}
+  .vp-card h3{font-family:'Crimson Pro',serif;font-weight:600;font-size:19px;color:var(--darkblue);margin:0;}
+  .vp-card p{font-size:13px;color:var(--black);font-family:'Inter',sans-serif;line-height:1.7;margin:0 0 14px;}
+  .vp-sub{font-weight:700;color:var(--pulse-dark);font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;margin:14px 0 8px;font-family:'Inter',sans-serif;}
+  .vp-card ul{margin:0 0 4px;padding-left:0;list-style:none;}
+  .vp-card li{font-size:12.5px;color:var(--black);font-family:'Inter',sans-serif;line-height:1.7;padding-left:20px;position:relative;margin-bottom:3px;}
+  .vp-card li::before{content:"";position:absolute;left:0;top:8px;width:7px;height:7px;border-radius:2px;background:var(--pulse);}
+  .vp-status{display:inline-block;font-size:11px;font-weight:700;color:#8a5a20;background:var(--amber-soft);padding:4px 12px;border-radius:999px;margin-top:6px;}
+  .vp-status.available{color:var(--green);background:rgba(31,122,77,.12);}
+
+  /* NEXT STEP */
+  .next-card{border:1px solid var(--line);border-radius:18px;padding:30px 32px;background:linear-gradient(160deg,var(--beige),var(--white));}
+  .next-date{display:inline-flex;align-items:center;gap:8px;background:var(--darkblue);color:#fff;font-weight:700;font-size:13px;padding:8px 16px;border-radius:999px;margin-bottom:16px;font-family:'Inter',sans-serif;}
+  .next-card p{font-size:14px;line-height:1.75;color:var(--black);font-family:'Inter',sans-serif;margin:0 0 14px;}
+  .next-card p:last-child{margin-bottom:0;}
+
+  footer{text-align:center;color:var(--gray);font-size:11.5px;margin-top:36px;font-family:'Inter',sans-serif;}
+
+  @media (max-width:760px){
+    .kpi-grid{grid-template-columns:repeat(2,1fr);}
+    table{font-size:12px;}
+    th,td{padding:9px 10px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <svg class="wire" viewBox="0 0 400 260" xmlns="http://www.w3.org/2000/svg" fill="none">
+      <path d="M40 0 C 90 90, 10 120, 60 150" stroke="#fff" stroke-width="1.2"/>
+      <path d="M200 20 C 320 40, 260 160, 400 190" stroke="#fff" stroke-width="1.2"/>
+      <path d="M180 130 C 120 190, 260 230, 340 130" stroke="#fff" stroke-width="1.2"/>
+      <ellipse cx="330" cy="60" rx="70" ry="18" stroke="#fff" stroke-width="1" transform="rotate(-18 330 60)"/>
+    </svg>
+    <h1>Rapport de performance</h1>
+    <p>Ophtavenir — Pôle Ophtalmologie Varois Sainte-Maxime — Août 2026</p>
+    <span class="badge">1 376 appels traités · 120 RDV pris en autonomie · Août 2026</span>
+  </header>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('perf', this)">
+      <span class="tb-name">Performance</span>
+      <span class="tb-sub">Août 2026</span>
+    </button>
+    <button class="tab-btn" onclick="showTab('vp', this)">
+      <span class="tb-name">Vision produit</span>
+      <span class="tb-sub">Avis patient · Liste d'attente · Réactivation</span>
+    </button>
+    <button class="tab-btn" onclick="showTab('next', this)">
+      <span class="tb-name">Prochaine étape</span>
+      <span class="tb-sub">Point pilote sur site</span>
+    </button>
+  </div>
+
+  <!-- ============ PANEL PERFORMANCE ============ -->
+  <div class="panel active" id="panel-perf">
+
+    <section>
+      <div class="section-head">
+        <h2><span class="icn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></span>Indicateurs clés</h2>
+        <span class="pill">Août 2026</span>
+      </div>
+      <p class="sub">Vue d'ensemble du Pôle Ophtalmologie Varois Sainte-Maxime</p>
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="label">Taux d'automatisation<br>(sans humain, sans transfert, sans tâche)</div>
+          <div class="value">53,9%</div>
+          <div class="foot">Sur 1 376 appels traités</div>
+        </div>
+        <div class="kpi-card">
+          <div class="label">Taux de transformation prise de RDV</div>
+          <div class="value">27,7%</div>
+          <div class="foot">120 RDV / 433 demandes</div>
+        </div>
+        <div class="kpi-card">
+          <div class="label">CSAT patients<br>(note sur 5)</div>
+          <div class="value green">4,27</div>
+          <div class="foot">128 répondants sur la période</div>
+        </div>
+        <div class="kpi-card">
+          <div class="label">Taux de transfert</div>
+          <div class="value">15,8%</div>
+          <div class="foot">217 appels transférés sur 1 376</div>
+        </div>
+        <div class="kpi-card">
+          <div class="label">Nombre d'appels traités</div>
+          <div class="value small">1 376</div>
+          <div class="foot">Août 2026</div>
+        </div>
+        <div class="kpi-card">
+          <div class="label">Demandes de rendez-vous</div>
+          <div class="value small">433</div>
+          <div class="foot">31,5% des appels traités</div>
+        </div>
+        <div class="kpi-card">
+          <div class="label">RDV pris en autonomie par Vocca</div>
+          <div class="value small">120</div>
+          <div class="foot">27,7% des demandes</div>
+        </div>
+        <div class="kpi-card">
+          <div class="label">Tâches créées</div>
+          <div class="value small">418</div>
+          <div class="foot">Août 2026</div>
+        </div>
+      </div>
+      <p class="sub" style="margin-top:16px;margin-bottom:0;"><strong>86 des 120 RDV pris en autonomie (71,7%) l'ont été en dehors des horaires d'ouverture du secrétariat — de la valeur générée sans mobiliser l'équipe sur place.</strong></p>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2><span class="icn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>Répartition des appels</h2>
+      </div>
+      <p class="sub">Motifs d'appel sur l'ensemble des 1 376 appels traités (août 2026)</p>
+      <div class="repartition-card">
+        <div class="repartition-grid">
+          <div class="donut-wrap">
+            <div class="donut" style="background:conic-gradient(from 0deg,
+                #3568F6 0% 31.5%,
+                #D98A3D 31.5% 53.7%,
+                #5B8AC7 53.7% 74.4%,
+                #B23A48 74.4% 82.1%,
+                #8E6FB3 82.1% 89.0%,
+                #0B355F 89.0% 94.3%,
+                #6b7480 94.3% 97.3%,
+                #3F9C7B 97.3% 98.8%,
+                #C9A227 98.8% 100%,
+                #2AA9B8 100% 100%);">
+              <div class="donut-hole">
+                <div class="donut-total">1 376</div>
+                <div class="donut-label">appels</div>
+              </div>
+            </div>
+          </div>
+          <div class="legend-list">
+            <div class="legend-row"><span class="dot" style="background:#3568F6"></span><span class="legend-label">Prise de rendez-vous</span><span class="legend-count">433</span><span class="legend-pct">31,5%</span></div>
+            <div class="legend-row"><span class="dot" style="background:#D98A3D"></span><span class="legend-label">Demande d'information spécifique</span><span class="legend-count">306</span><span class="legend-pct">22,2%</span></div>
+            <div class="legend-row"><span class="dot" style="background:#5B8AC7"></span><span class="legend-label">Demande d'information générale</span><span class="legend-count">285</span><span class="legend-pct">20,7%</span></div>
+            <div class="legend-row"><span class="dot" style="background:#B23A48"></span><span class="legend-label">Déplacement de RDV</span><span class="legend-count">106</span><span class="legend-pct">7,7%</span></div>
+            <div class="legend-row"><span class="dot" style="background:#8E6FB3"></span><span class="legend-label">Mise en relation secrétariat</span><span class="legend-count">95</span><span class="legend-pct">6,9%</span></div>
+            <div class="legend-row"><span class="dot" style="background:#0B355F"></span><span class="legend-label">Annulation de RDV</span><span class="legend-count">73</span><span class="legend-pct">5,3%</span></div>
+            <div class="legend-row"><span class="dot" style="background:#6b7480"></span><span class="legend-label">Accueil &amp; orientation</span><span class="legend-count">41</span><span class="legend-pct">3,0%</span></div>
+            <div class="legend-row"><span class="dot" style="background:#3F9C7B"></span><span class="legend-label">Confirmation de RDV</span><span class="legend-count">20</span><span class="legend-pct">1,5%</span></div>
+            <div class="legend-row"><span class="dot" style="background:#C9A227"></span><span class="legend-label">Signalement de retard</span><span class="legend-count">17</span><span class="legend-pct">1,2%</span></div>
+            <div class="legend-row"><span class="dot" style="background:#2AA9B8"></span><span class="legend-label">Numéro en liste blanche</span><span class="legend-count">0</span><span class="legend-pct">0,0%</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2><span class="icn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg></span>Automatisation — modifications &amp; annulations de RDV</h2>
+        <span class="pill">Août 2026</span>
+      </div>
+      <p class="sub">Part des demandes traitées de bout en bout par Vocca, sans intervention humaine</p>
+      <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Indicateur</th><th>Demandes</th><th>Réalisées en autonomie</th><th class="total">Taux d'automatisation</th></tr></thead>
+        <tbody>
+          <tr><td>Modification de RDV</td><td>106</td><td>41</td><td class="total">38,7%</td></tr>
+          <tr><td>Annulation de RDV</td><td>73</td><td>32</td><td class="total">43,8%</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p class="sub" style="margin-top:14px;margin-bottom:0;">La prise de RDV et la modification/annulation sont déjà pilotées par des paramètres distincts sur ce centre : ces taux (38,7% et 43,8%) reflètent la configuration actuelle et progressent avec l'usage.</p>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2><span class="icn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>Configuration actuelle</h2>
+      </div>
+      <p class="sub">Paramétrage des motifs de prise en charge</p>
+      <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Indicateur</th><th class="total">Valeur</th></tr></thead>
+        <tbody>
+          <tr><td>Nombre de motifs configurés</td><td class="total">22</td></tr>
+          <tr><td>Ouverts à l'autonomie Vocca</td><td class="total">12 <span class="pct">(54,5%)</span></td></tr>
+          <tr><td>Fermés → création de tâche</td><td class="total">0 <span class="pct">(0,0%)</span></td></tr>
+          <tr><td>Transférés secrétariat</td><td class="total">10 <span class="pct">(45,5%)</span></td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p class="sub" style="margin-top:14px;margin-bottom:0;">45,5% des motifs sont aujourd'hui transférés au secrétariat plutôt que gérés en autonomie par Vocca — une marge de progression cohérente avec le taux d'automatisation global actuel (53,9%) et le premier levier pour le faire progresser.</p>
+    </section>
+
+    <section class="highlight">
+      <div class="section-head">
+        <h2><span class="icn amber"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg></span>Pourquoi les appels n'aboutissent pas</h2>
+        <span class="pill amber">Août 2026</span>
+      </div>
+      <div class="bars-list">
+        <div class="bar-item"><div class="bl">Motif configuré en transfert secrétariat</div><div class="bar-track"><div class="bar-fill amber" style="width:100%"></div></div><div class="bv">40,0%</div></div>
+        <div class="bar-item"><div class="bl">Demande du patient (création de tâche)</div><div class="bar-track"><div class="bar-fill amber" style="width:46.5%"></div></div><div class="bv">18,6%</div></div>
+        <div class="bar-item"><div class="bl">Échec du transfert d'appel</div><div class="bar-track"><div class="bar-fill" style="width:26.8%"></div></div><div class="bv">10,7%</div></div>
+        <div class="bar-item"><div class="bl">Créneaux refusés par le patient</div><div class="bar-track"><div class="bar-fill" style="width:19.8%"></div></div><div class="bv">7,9%</div></div>
+      </div>
+      <p class="sub" style="margin-top:16px;margin-bottom:0;"><strong>Le motif configuré en transfert secrétariat (40,0%) reste la première cause — un choix de configuration du centre, à l'origine de la marge de progression identifiée ci-dessus. Les demandes explicites du patient à être recontacté (18,6%) suivent.</strong></p>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2><span class="icn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>Levier d'amélioration : fluidifier les transferts vers le secrétariat</h2>
+      </div>
+      <p class="sub">Un point de capacité côté centre, pas un problème de traitement de l'appel</p>
+      <div class="mockup">
+        <p>Sur la période, une partie des causes recensées (10,7%) correspond à des tentatives de transfert vers le secrétariat survenues alors que la ligne était déjà occupée par d'autres transferts en cours. C'est un simple signal de capacité de réception côté centre à certains moments de forte affluence — l'échange avec le patient s'est bien déroulé jusqu'à cette étape.</p>
+        <p>Deux leviers permettent d'y remédier, éventuellement combinés :</p>
+        <ul>
+          <li>Augmenter le nombre de canaux simultanés côté centre — c'est-à-dire le nombre de lignes téléphoniques et de secrétaires disponibles pour recevoir un transfert en parallèle.</li>
+          <li>Mettre en place (ou renforcer) une file d'attente téléphonique côté centre, pour absorber les pics de transferts plutôt que de les rejeter.</li>
+        </ul>
+        <p>Une file d'attente existe peut-être déjà mais reste dimensionnée pour un volume inférieur à celui généré par les transferts Vocca — un point que nous vous proposons de valider ensemble avec votre équipe.</p>
+        <p><strong>Point de blocage identifié côté opérateur :</strong> Bouygues considère le numéro Vocca en 09 comme un numéro externe. Pour autoriser ce renvoi, il faudrait intégrer ce numéro dans la configuration des lignes du cabinet.</p>
+        <p style="margin-bottom:0;">Les personnes jointes chez Bouygues n'ont pas su — ou n'étaient pas habilitées — à faire cette modification. Céline a contacté un technicien puis plusieurs interlocuteurs de déploiement, sans résolution ; les commerciaux référents étaient absents. Pierre est en cours d'investigation et suit le sujet de près.</p>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ============ PANEL VISION PRODUIT ============ -->
+  <div class="panel" id="panel-vp">
+
+    <section>
+      <div class="section-head">
+        <h2><span class="icn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg></span>Vision produit</h2>
+        <span class="pill">Roadmap à venir</span>
+      </div>
+      <p class="sub">Vue d'ensemble de la roadmap produit Vocca, juillet à septembre 2026</p>
+
+      <div class="vp-card">
+        <div class="vp-head">
+          <h3>Appels sortants</h3>
+          <span class="vp-status available">Déjà disponible</span>
+        </div>
+        <p style="margin-bottom:0;">Vocca peut déjà déclencher des campagnes d'appels sortants pour vos patients : annulation en masse en cas d'absence imprévue d'un praticien, et confirmation de rendez-vous multicanal (SMS, WhatsApp et appel), avec un message engageant et adapté au motif de la consultation.</p>
+      </div>
+
+      <h3 style="font-family:'Crimson Pro',serif;font-weight:600;font-size:20px;color:var(--darkblue);margin:8px 0 16px;">Notre vision Produit co-construite avec vous pour répondre à vos besoins</h3>
+
+      <div class="phase-grid">
+        <div class="phase-card">
+          <span class="phase-status livre">LIVRÉ</span>
+          <h4>Mars → Août 2026</h4>
+          <p>Chaque appel patient est pris en charge, tracé et orienté au bon endroit, sans charge supplémentaire pour les secrétariats.</p>
+          <p class="phase-concrete">Concrètement : transfert sélectif de numéros, configuration praticien × motif, historique des appels dans le tableau de bord, <strong>refonte de l'onglet analytique</strong></p>
+          <span class="phase-tag">Fondation posée</span>
+        </div>
+        <div class="phase-card">
+          <span class="phase-status q3">Q3 2026</span>
+          <h4>D'ici septembre</h4>
+          <p>Le parcours se structure avant même le rendez-vous.</p>
+          <p class="phase-concrete">Concrètement : <strong>liste d'attente</strong> pour les motifs sans disponibilités, <strong>réactivation des patients</strong> inactifs, <strong>Avis Patient</strong> pour générer davantage d'avis positifs publics, <strong>Chatbot en ligne</strong> pour convertir le trafic web des centres en rendez-vous</p>
+          <span class="phase-tag">Parcours structuré</span>
+        </div>
+        <div class="phase-card">
+          <span class="phase-status q4">Q4 2026</span>
+          <h4>D'ici fin 2026</h4>
+          <p>Le périmètre s'élargit à l'ensemble du parcours patient, et les centres gagnent en autonomie.</p>
+          <p class="phase-concrete">Concrètement : enchaînement de rendez-vous, <strong>pré-admission généralisée</strong>, scénarios spécifiques (ordonnance, urgence, ...), self-onboarding des centres.</p>
+          <span class="phase-tag">Autonomie des centres</span>
+        </div>
+      </div>
+
+      <p class="sub" style="margin-top:20px;">Notre feuille de route se construit avec nos clients, à partir de vos retours terrain. Zoom sur les cinq fonctionnalités les plus pertinentes pour Ophtavenir.</p>
+
+      <div class="vp-card">
+        <div class="vp-head">
+          <h3>Avis patient</h3>
+        </div>
+        <p>Après un rendez-vous, le patient reçoit un SMS pour évaluer son expérience. Selon la note donnée, le centre peut définir une redirection : vers son CRM pour les retours bas, ou vers Google pour les notes élevées. Une interface permet ensuite de suivre, traiter et analyser l'ensemble des avis patients.</p>
+        <div class="vp-sub">Intérêt client</div>
+        <ul>
+          <li>Générer davantage d'avis positifs publics.</li>
+          <li>Identifier et traiter les insatisfactions avant qu'elles ne deviennent publiques.</li>
+          <li>Centraliser le suivi de la réputation patient du centre.</li>
+        </ul>
+      </div>
+
+      <div class="vp-card">
+        <div class="vp-head">
+          <h3>Liste d'attente — v1</h3>
+        </div>
+        <p>Quand aucun créneau n'est disponible pendant l'appel, le bot propose au patient d'être ajouté à une liste d'attente. Si un créneau se libère — notamment à la suite d'une annulation — le patient reçoit un SMS avec un lien vers l'interface patient pour réserver en ligne. Une annulation de RDV peut ainsi alimenter automatiquement la liste d'attente.</p>
+        <div class="vp-sub">Intérêt client</div>
+        <ul>
+          <li>Réduire les créneaux perdus.</li>
+          <li>Transformer des demandes non satisfaites en rendez-vous.</li>
+          <li>Poser la première brique de la prise de rendez-vous en ligne.</li>
+        </ul>
+        <span class="vp-status">Statut : première version attendue fin août / début septembre 2026</span>
+      </div>
+
+      <div class="vp-card">
+        <div class="vp-head">
+          <h3>Liste d'attente — v2 : proposer un rendez-vous plus tôt</h3>
+        </div>
+        <p>Cette deuxième version cible les patients qui ont déjà un rendez-vous programmé. Si un créneau plus proche se libère, Vocca peut leur proposer automatiquement de l'avancer.</p>
+        <div class="vp-sub">Cas d'usage</div>
+        <ul>
+          <li>Un patient a un rendez-vous dans plusieurs semaines.</li>
+          <li>Un créneau antérieur se libère.</li>
+          <li>Le patient reçoit une proposition pour avancer son rendez-vous.</li>
+        </ul>
+        <div class="vp-sub">Valeur</div>
+        <ul>
+          <li>Réduire les délais perçus par les patients.</li>
+          <li>Optimiser le remplissage des agendas.</li>
+          <li>Fonctionnalité particulièrement utile pour les spécialités à forte tension sur les délais de rendez-vous, comme l'ophtalmologie.</li>
+        </ul>
+      </div>
+
+      <div class="vp-card">
+        <div class="vp-head">
+          <h3>Réactivation patient</h3>
+        </div>
+        <p>Vocca envoie automatiquement un message à un patient qui n'est pas revenu depuis un délai défini, pour un motif de consultation donné.</p>
+        <div class="vp-sub">Exemple</div>
+        <p style="margin-bottom:0;">Un patient qui n'a pas consulté depuis 6 à 12 mois peut recevoir une relance afin de reprendre rendez-vous.</p>
+        <div class="vp-sub">Valeur</div>
+        <ul>
+          <li>Réactiver une base patients existante.</li>
+          <li>Générer des rendez-vous supplémentaires sans acquisition de nouveaux patients.</li>
+        </ul>
+      </div>
+
+      <div class="vp-card">
+        <div class="vp-head">
+          <h3>Online Chatbot / prise de RDV en ligne</h3>
+        </div>
+        <p>Le chatbot transpose le produit voix sur le site web du centre. Il permet au patient de prendre rendez-vous en ligne dans un parcours conversationnel.</p>
+        <div class="vp-sub">Valeur</div>
+        <ul>
+          <li>Convertir le trafic web des centres en rendez-vous.</li>
+          <li>Étendre Vocca au-delà du canal téléphonique.</li>
+        </ul>
+      </div>
+
+    </section>
+
+  </div>
+
+  <!-- ============ PANEL PROCHAINE ETAPE ============ -->
+  <div class="panel" id="panel-next">
+
+    <section>
+      <div class="section-head">
+        <h2><span class="icn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/></svg></span>Prochaine étape</h2>
+        <span class="pill">Point pilote sur site</span>
+      </div>
+      <p class="sub">Proposition de rendez-vous pour faire le bilan du pilote ensemble</p>
+      <div class="next-card">
+        <span class="next-date">📅 7 octobre 2026</span>
+        <p>Dans la continuité de ce premier mois de suivi, nous souhaiterions organiser un temps d'échange sur site afin de faire ensemble un point de performance complet sur le pilote Vocca déployé au Pôle Ophtalmologie Varois Sainte-Maxime.</p>
+        <p>Seriez-vous disponible le <strong>7 octobre 2026</strong> pour que nous venions à votre siège, ou sur le site de votre choix, présenter ce rapport de performance et échanger sur les prochaines étapes du pilote, ainsi que sur une éventuelle extension à d'autres sites ?</p>
+      </div>
+    </section>
+
+  </div>
+
+  <footer>Rapport généré le 27 août 2026 — données Vocca, Ophtavenir (Pôle Ophtalmologie Varois Sainte-Maxime), Août 2026.</footer>
+</div>
+
+<script>
+function showTab(id, btn) {
+  document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('active'); });
+  document.getElementById('panel-' + id).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>
